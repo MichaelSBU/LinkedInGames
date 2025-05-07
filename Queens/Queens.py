@@ -196,11 +196,11 @@ def dfsplusplus(board):
 
 
 
-def animate_queens(frames, board):
-    print(frames)
-    print("Animating ", len(frames), " steps!")
+def animate_queens(frames, board, repeat_count=1000):
+    #print(frames)
+    print("Animating", len(frames), "steps!")
     n = len(board)
-    fig, ax = plt.subplots(figsize=(n, n))
+    fig, ax = plt.subplots(figsize=(4.8, 4.8))
     board_array = np.array(board)
 
     # Generate a unique color for each number
@@ -208,13 +208,19 @@ def animate_queens(frames, board):
     cmap = plt.get_cmap('tab20', len(unique_vals))
     color_map = {val: cmap(i) for i, val in enumerate(unique_vals)}
 
-    def update(frame_index):
+    total_frames = len(frames)
+    total_plays = repeat_count * total_frames
+
+    def update(i):
+        frame_index = i % total_frames
+        loop_num = i // total_frames + 1
+        step_num = frame_index + 1
         ax.clear()
         ax.set_xlim(0, n)
         ax.set_ylim(0, n)
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.set_title(f"Step {frame_index+1}")
+        ax.set_title(f"Step {step_num} of {total_frames} (Loop #: {loop_num})")
 
         # Draw colored board cells
         for r in range(n):
@@ -225,7 +231,7 @@ def animate_queens(frames, board):
         frame = frames[frame_index]
         queen_positions = [(r, col) for r, col in enumerate(frame) if col != -1]
 
-        # Draw Xs in rows, columns, and corners for placed queens
+        # Draw Xs in rows, columns, and diagonals
         for qr, qc in queen_positions:
             for r in range(n):
                 if (r, qc) not in queen_positions:
@@ -235,7 +241,8 @@ def animate_queens(frames, board):
                     ax.text(c + 0.5, n - qr - 0.5, "X", ha='center', va='center', fontsize=14, color='darkgrey')
             for dr in [-1, 0, 1]:
                 for dc in [-1, 0, 1]:
-                    if dr == 0 and dc == 0: continue
+                    if dr == 0 and dc == 0:
+                        continue
                     rr, cc = qr + dr, qc + dc
                     if 0 <= rr < n and 0 <= cc < n and (rr, cc) not in queen_positions:
                         ax.text(cc + 0.5, n - rr - 0.5, "X", ha='center', va='center', fontsize=14, color='darkgrey')
@@ -249,8 +256,7 @@ def animate_queens(frames, board):
             ax.plot([0, n], [i, i], color='black')
             ax.plot([i, i], [0, n], color='black')
 
-
-    ani = animation.FuncAnimation(fig, update, frames=len(frames), interval=100, repeat=False)
+    ani = animation.FuncAnimation(fig, update, frames=total_plays, interval=300, repeat=False)
     plt.show()
 
 

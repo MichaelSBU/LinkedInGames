@@ -73,7 +73,7 @@ class ZipSolver:
     def _dfs(self, pos, visited, current_number, path):
         self.animation_frames.append((list(path), True))
 
-        if current_number == self.target_sequence[-1] and len(visited) == self.n * self.n:
+        if self.board[pos[0]][pos[1]] == self.target_sequence[-1] and len(visited) == self.n * self.n:
             return list(path)
 
         for dx, dy in DIRS_LIST:
@@ -336,7 +336,7 @@ class ZipSolver:
             #print(len(self.animation_frames))
             f_score, g_score, pos, current_number, visited, path = heapq.heappop(heap)
 
-            if current_number == self.target_sequence[-1] and len(visited) == self.n * self.n:
+            if self.board[pos[0]][pos[1]] == self.target_sequence[-1] and len(visited) == self.n * self.n:
                 return list(path)
 
             for dx, dy in DIRS_LIST:
@@ -367,11 +367,15 @@ class ZipSolver:
 
         return None
 
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from matplotlib.collections import LineCollection
+import numpy as np
+
 def animate_dfs(board, frames):
     n = len(board)
-    fig, ax = plt.subplots(figsize=(6,6))
-    step_text = ax.text(0.5, 1.05, "", transform=ax.transAxes,
-                    ha='center', va='bottom', fontsize=14, weight='bold')
+    fig, ax = plt.subplots(figsize=(4.8, 4.8))
+
     ax.set_xlim(0, n)
     ax.set_ylim(0, n)
     ax.set_xticks([])
@@ -383,12 +387,6 @@ def animate_dfs(board, frames):
         for j in range(n):
             rect = plt.Rectangle((j, n - 1 - i), 1, 1, fill=False, edgecolor='gray', linewidth=1, zorder=1)
             ax.add_patch(rect)
-
-    # Function to create smooth rounded corners
-    def add_corner_circle(x, y, radius=0.3, color='red'):
-        # Create the corner circle and set the zorder to ensure it's on top
-        circle = plt.Circle((x, y), radius, color=color, ec=color, lw=2, zorder=5)
-        ax.add_patch(circle)
 
     def make_gradient_line(x, y, total_steps):
         """Create segments with a smooth transition from green to purple based on total grid size"""
@@ -423,7 +421,10 @@ def animate_dfs(board, frames):
     path_collection = LineCollection([], linewidth=25, zorder=2)
     ax.add_collection(path_collection)
 
+    total_repeats = 1
+
     def update(frame_idx):
+        nonlocal total_repeats
         path, is_forward = frames[frame_idx]
         x = [p[1] + 0.5 for p in path]
         y = [n - 1 - p[0] + 0.5 for p in path]
@@ -433,30 +434,16 @@ def animate_dfs(board, frames):
         path_collection.set_segments(segments)
         path_collection.set_color(colors)
 
-        step_text.set_text(f"Step {frame_idx + 1} of {len(frames)}")
+        ax.set_title(f"Step {frame_idx + 1} of {len(frames)}, Loop #: {total_repeats}")
 
-        # Remove previously added corner circles for each update (without affecting the numbers)
-        for circle in ax.patches:
-            if isinstance(circle, plt.Circle) and circle.radius == 0.3:  # Only remove corner circles
-                circle.remove()
-
-        # Add corner circles for rounded turns (same color as the line)
-        for i in range(1, len(path) - 1):
-            prev = path[i - 1]
-            curr = path[i]
-            next = path[i + 1]
-            
-            # Detect if there's a change in direction (i.e., a corner)
-            if (curr[0] != prev[0] and curr[0] != next[0]) or (curr[1] != prev[1] and curr[1] != next[1]):
-                # Find color for current position in the path (matching line color)
-                t = (i / (n * n))
-                color = (0, 1 - t, t)  # Linear interpolation between green and purple
-                add_corner_circle(curr[1] + 0.5, n - 1 - curr[0] + 0.5, radius=0.3, color=color)
+        if frame_idx == len(frames)-1:
+            total_repeats+=1
 
         return path_collection,
 
-    ani = animation.FuncAnimation(fig, update, frames=len(frames), interval=300, blit=True, repeat=False)
+    ani = FuncAnimation(fig, update, frames=len(frames), interval=300, blit=False, repeat=True)
     plt.show()
+
 
 
 

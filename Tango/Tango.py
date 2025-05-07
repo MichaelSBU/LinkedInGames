@@ -359,73 +359,65 @@ def DFSBplusplus(variables, assignments, full_domain, constraints, row_counts, c
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-def animate(assignment_history, pair_constraint_map, n):
-    print("Animating ", len(assignment_history), " steps!")
-    fig, ax = plt.subplots(figsize=(n, n))
-    
-    # Get the first frame assignments
-    first_frame_assignments = assignment_history[0]
+def animate(assignment_history, pair_constraint_map, n, repeat_count=1000):
+    print("Animating", len(assignment_history), "steps!")
+    fig, ax = plt.subplots(figsize=(4.8, 4.8))
 
-    def update_grid(frame):
-        ax.clear()  # Clear the current frame
+    first_frame_assignments = assignment_history[0]
+    total_frames = len(assignment_history)
+    total_plays = repeat_count * total_frames
+
+    def update_grid(i):
+        frame = i % total_frames
+        loop = i // total_frames + 1
+        ax.clear()
         ax.set_xlim(0, n)
         ax.set_ylim(0, n)
-        ax.set_xticks([])  # Remove x-axis ticks
-        ax.set_yticks([])  # Remove y-axis ticks
+        ax.set_xticks([])
+        ax.set_yticks([])
         ax.set_xticklabels([])
         ax.set_yticklabels([])
 
-        # Draw the grid lines (black and thick)
-        for r in range(n + 1):  # +1 to include the last row/column line
-            ax.plot([0, n], [r, r], color='gray', linewidth=1.5)  # Horizontal lines
-            ax.plot([r, r], [0, n], color='gray', linewidth=1.5)  # Vertical lines
+        # Draw grid lines
+        for r in range(n + 1):
+            ax.plot([0, n], [r, r], color='gray', linewidth=1.5)
+            ax.plot([r, r], [0, n], color='gray', linewidth=1.5)
 
-        # Draw cells based on the current assignment state
+        # Draw cells
         for r in range(n):
             for c in range(n):
                 value = assignment_history[frame].get((r, c), None)
-                
-                # If the cell has been assigned in the first frame, add a light gray background
                 if first_frame_assignments[(r, c)] != -1:
-                    ax.add_patch(plt.Rectangle((c, n - r - 1), 1, 1, color='lightgray'))  # Light gray background
-                     # Now draw the value for the current frame
+                    ax.add_patch(plt.Rectangle((c, n - r - 1), 1, 1, color='lightgray'))
                     if value == 0:
-                        ax.add_patch(plt.Circle((c + 0.5, n - r - 0.5), 0.3, color='orange'))  # Orange circle for 0
+                        ax.add_patch(plt.Circle((c + 0.5, n - r - 0.5), 0.3, color='orange'))
                     elif value == 1:
-                        # Blue moon (blue circle with a smaller white circle)
-                        ax.add_patch(plt.Circle((c + 0.5, n - r - 0.5), 0.3, color='blue'))  # Blue circle
-                        ax.add_patch(plt.Circle((c + 0.35, n - r - 0.4), 0.22, color='lightgray'))  # White circle overlay
-
-
+                        ax.add_patch(plt.Circle((c + 0.5, n - r - 0.5), 0.3, color='blue'))
+                        ax.add_patch(plt.Circle((c + 0.35, n - r - 0.4), 0.22, color='lightgray'))
                 else:
-                    # Now draw the value for the current frame
                     if value == 0:
-                        ax.add_patch(plt.Circle((c + 0.5, n - r - 0.5), 0.3, color='orange'))  # Orange circle for 0
+                        ax.add_patch(plt.Circle((c + 0.5, n - r - 0.5), 0.3, color='orange'))
                     elif value == 1:
-                        # Blue moon (blue circle with a smaller white circle)
-                        ax.add_patch(plt.Circle((c + 0.5, n - r - 0.5), 0.3, color='blue'))  # Blue circle
-                        ax.add_patch(plt.Circle((c + 0.35, n - r - 0.4), 0.22, color='white'))  # White circle overlay
+                        ax.add_patch(plt.Circle((c + 0.5, n - r - 0.5), 0.3, color='blue'))
+                        ax.add_patch(plt.Circle((c + 0.35, n - r - 0.4), 0.22, color='white'))
 
-        # Draw grid lines with gray color to indicate constraints
+        # Constraints
         for r in range(n):
             for c in range(n):
-                if c < n - 1:  # Horizontal constraints between (r, c) and (r, c+1)
+                if c < n - 1:
                     constraint = pair_constraint_map.get(((r, c), (r, c + 1)))
-                    if constraint == '=':
-                        ax.text(c + 1, n - r - 0.5, '=', color='dimgray', ha='center', va='center', fontsize=16, fontweight="bold")
-                    elif constraint == 'x':
-                        ax.text(c + 1, n - r - 0.5, 'x', color='dimgray', ha='center', va='center', fontsize=16, fontweight="bold")
-
-                if r < n - 1:  # Vertical constraints between (r, c) and (r+1, c)
+                    if constraint in {'=', 'x'}:
+                        ax.text(c + 1, n - r - 0.5, constraint, color='dimgray',
+                                ha='center', va='center', fontsize=16, fontweight="bold")
+                if r < n - 1:
                     constraint = pair_constraint_map.get(((r, c), (r + 1, c)))
-                    if constraint == '=':
-                        ax.text(c + 0.5, n - r - 1.0, '=', color='dimgray', ha='center', va='center', fontsize=16, fontweight="bold")
-                    elif constraint == 'x':
-                        ax.text(c + 0.5, n - r - 1.0, 'x', color='dimgray', ha='center', va='center', fontsize=16, fontweight="bold")
-        
-        ax.set_title(f"Step {frame + 1}")
-        
-    ani = animation.FuncAnimation(fig, update_grid, frames=len(assignment_history), repeat=False, interval=50)
+                    if constraint in {'=', 'x'}:
+                        ax.text(c + 0.5, n - r - 1.0, constraint, color='dimgray',
+                                ha='center', va='center', fontsize=16, fontweight="bold")
+
+        ax.set_title(f"Step {frame + 1} of {total_frames} (Loop #: {loop})")
+
+    ani = animation.FuncAnimation(fig, update_grid, frames=total_plays, repeat=False, interval=300)
     plt.show()
 
 
